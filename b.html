@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- 카카오톡 미리보기용 메타 태그 -->
+    <meta property="og:title" content="4대보험 환급진단 서비스">
+    <meta property="og:description" content="3분만에 확인하는 평균 5천만원 환급가능금액">
+    <meta property="og:image" content="https://pagebugs.github.io/images/preview.png">
+    <meta property="og:url" content="https://pagebugs.github.io">
+    <title>든든한 빽</title>
+    <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #18181b;
+            font-family: 'Spoqa Han Sans', 'Spoqa Han Sans JP', 'Sans-serif';
+            padding: 20px;
+        }
+
+        .card-container {
+            width: 100%;
+            max-width: 350px;
+            background: #18181b;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            color: white;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* 여백 줄임 */
+        }
+
+        .top-section {
+            text-align: center;
+        }
+
+        .intro {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .back {
+            font-size: 48px;
+            font-weight: 700;
+            font-style: italic; /* 이탤릭 추가 */
+            color: white;
+            line-height: 1;
+        }
+
+        .middle-section {
+            padding: 10px 0; /* 여백 줄임 */
+        }
+
+        .scratch-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #scratchCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .qr-code img {
+            width: 130px;
+            height: 130px;
+        }
+
+        .bottom-section {
+            text-align: center;
+        }
+
+        .highlight {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .sub-text {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px; /* 여백 줄임 */
+        }
+
+        .ai-text {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .back-meaning {
+            font-size: 12px;
+            opacity: 0.7;
+            letter-spacing: -0.5px;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        @media (max-width: 380px) {
+            .card-container {
+                padding: 16px;
+            }
+
+            .back {
+                font-size: 40px;
+            }
+
+            .highlight {
+                font-size: 20px;
+            }
+
+            .scratch-container,
+            .qr-code {
+                width: 130px;
+                height: 130px;
+            }
+
+            .qr-code img {
+                width: 110px;
+                height: 110px;
+            }
+                    /* 이전 스타일에 추가 */
+            .link-button {
+                background: #3b82f6;
+                color: white;
+                padding: 12px;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+                display: inline-block;
+                margin-top: 8px;
+                transition: background-color 0.3s;
+            }
+
+            .link-button:hover {
+                background: #2563eb;
+            }
+
+            .link-area {
+                width: 150px;
+                height: 150px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: #f8f8f8;
+                color: #1a1a1a;
+                font-size: 14px;
+                line-height: 1.5;
+                text-align: center;
+                padding: 15px;
+            }
+
+            .pulse {
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <div class="content-wrapper">
+            <div class="top-section">
+                <div class="intro">사업하는 당신을 위한 든든한</div>
+                <div class="back">빽</div>
+            </div>
+            
+            <div class="scratch-container">
+                <div class="qr-code" id="linkArea" onclick="handleClick()" style="opacity: 0; transition: opacity 0.5s;">
+                    <div class="link-area">
+                        <span>환급금액 확인하기</span>
+                        <div class="link-button pulse">확인하러 가기</div>
+                    </div>
+                </div>
+                <canvas id="scratchCanvas" width="150" height="150"></canvas>
+            </div>
+            
+            <div class="bottom-section">
+                <div class="highlight">3분 안에 5천만원 돌려받기</div>
+                <div class="sub-text">(사업장 평균 환급금)</div>
+                <div class="ai-text">AI빅데이터 박사가 만든</div>
+                <div class="back-meaning">
+                    <span class="bold">BACK</span> (Bring Assets Back, Build Assets Quick)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('scratchCanvas');
+            const ctx = canvas.getContext('2d');
+            const qrCode = document.getElementById('qrCode');
+            
+            // Fill canvas with gray color
+            ctx.fillStyle = '#CCCCCC';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add text to canvas
+            ctx.fillStyle = '#666666';
+            ctx.font = '14px "Spoqa Han Sans"';
+            ctx.textAlign = 'center';
+            ctx.fillText('긁어서', canvas.width/2, canvas.height/2 - 10);
+            ctx.fillText('QR코드를', canvas.width/2, canvas.height/2 + 10);
+            ctx.fillText('확인하세요', canvas.width/2, canvas.height/2 + 30);
+
+            let isDrawing = false;
+            let lastPoint = null;
+            let isTouchDevice = 'ontouchstart' in window;
+
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                return {
+                    x: (clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+                    y: (clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+                };
+            }
+
+            // 카카오톡 인앱브라우저 체크
+            function checkInAppBrowser() {
+                const userAgent = navigator.userAgent.toLowerCase();
+                return userAgent.indexOf('kakao') > -1;
+            }
+
+            // 외부 브라우저로 열기
+            function openExternalBrowser(url) {
+                if (checkInAppBrowser()) {
+                    // 카카오톡 인앱브라우저면 외부 브라우저로 열기
+                    location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+                } else {
+                    // 일반 브라우저면 그냥 열기
+                    location.href = url;
+                }
+            }
+
+            function handleClick() {
+                const targetUrl = 'https://dlcgroup.imweb.me/';
+                openExternalBrowser(targetUrl);
+            }
+
+            function scratch(e) {
+                if (!isDrawing) return;
+                
+                const currentPoint = getMousePos(e);
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.lineWidth = isTouchDevice ? 60 : 40;
+                ctx.lineCap = 'round';
+                
+                if (lastPoint) {
+                    ctx.moveTo(lastPoint.x, lastPoint.y);
+                    ctx.lineTo(currentPoint.x, currentPoint.y);
+                    ctx.stroke();
+                }
+
+                lastPoint = currentPoint;
+
+                // Check scratch percentage
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+                let transparent = 0;
+                for (let i = 0; i < pixels.length; i += 4) {
+                    if (pixels[i + 3] === 0) transparent++;
+                }
+                
+                if (transparent > pixels.length / 4 * 0.4) {
+                canvas.style.opacity = '0';
+                document.getElementById('linkArea').style.opacity = '1';
+            }
+            }
+
+            // Mouse events
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                lastPoint = getMousePos(e);
+            });
+
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+                lastPoint = null;
+            });
+            canvas.addEventListener('mouseout', () => {
+                isDrawing = false;
+                lastPoint = null;
+            });
+
+            // Touch events
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isDrawing = true;
+                lastPoint = getMousePos(e);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                scratch(e);
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isDrawing = false;
+                lastPoint = null;
+            });
+        });
+    </script>
+</body>
+</html>
