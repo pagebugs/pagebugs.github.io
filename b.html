@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>든든한 빽</title>
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
-    
+
     <!-- 카카오톡 미리보기 설정 -->
     <meta property="og:title" content="4대보험 환급진단 서비스">
     <meta property="og:description" content="3분만에 확인하는 평균 5천만원 환급가능금액">
     <meta property="og:image" content="https://pagebugs.github.io/images/preview.png">
     <meta property="og:url" content="https://pagebugs.github.io">
-    
+
     <style>
         * {
             margin: 0;
@@ -121,8 +121,7 @@
             font-weight: bold;
             cursor: pointer;
             display: inline-block;
-            margin-top: 8
-            px;
+            margin-top: 8px; /* 수정된 부분: 띄어쓰기 제거 */
             transition: background-color 0.3s;
         }
 
@@ -170,7 +169,7 @@
             color: #22c55e;
             margin-bottom: 8px;
         }
-        
+
         .link-button {
             background: #3b82f6;
             color: white;
@@ -183,20 +182,15 @@
             transition: all 0.3s;
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
         }
-        
+
         .link-button:hover {
             background: #2563eb;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);
         }
-        .qr-code {
-            pointer-events: none; /* 초기에는 클릭 불가능하게 */
-        }
+
+        /* .qr-code 클래스의 pointer-events 속성 제거 (JavaScript에서만 제어) */
         
-        .qr-code.revealed {
-            pointer-events: auto; /* 스크래치 후에는 클릭 가능하게 */
-        }
-                
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -237,20 +231,20 @@
                 <div class="intro">사업하는 당신을 위한 든든한</div>
                 <div class="back">빽</div>
             </div>
-            
+
             <div class="middle-section">
                 <div class="scratch-container">
                     <div class="qr-code" id="linkArea" style="opacity: 0; transition: opacity 0.5s;">
                         <div class="link-area">
                             <div class="check-icon">✓</div>
-                            <span>축하합니다!</span>
-                            <div class="link-button pulse">환급받기</div>
+                            <span>무료로</span>
+                            <div class="link-button pulse" id="redirectButton">환급받기</div>
                         </div>
                     </div>
                     <canvas id="scratchCanvas" width="150" height="150"></canvas>
                 </div>
             </div>
-            
+
             <div class="bottom-section">
                 <div class="highlight">3분 안에 5천만원 돌려받기</div>
                 <div class="sub-text">(사업장 평균 환급금)</div>
@@ -267,7 +261,8 @@
         const canvas = document.getElementById('scratchCanvas');
         const ctx = canvas.getContext('2d');
         const linkArea = document.getElementById('linkArea');
-        
+        const redirectButton = document.getElementById('redirectButton');
+
         // Fill canvas with gray color
         ctx.fillStyle = '#CCCCCC';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -299,13 +294,13 @@
 
         function scratch(e) {
             if (!isDrawing) return;
-            
+
             const currentPoint = getMousePos(e);
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
             ctx.lineWidth = isTouchDevice ? 60 : 40;
             ctx.lineCap = 'round';
-            
+
             if (lastPoint) {
                 ctx.moveTo(lastPoint.x, lastPoint.y);
                 ctx.lineTo(currentPoint.x, currentPoint.y);
@@ -321,11 +316,12 @@
             for (let i = 0; i < pixels.length; i += 4) {
                 if (pixels[i + 3] === 0) transparent++;
             }
-            
+
             if (transparent > pixels.length / 4 * 0.4) {
                 canvas.style.opacity = '0';
                 linkArea.style.opacity = '1';
                 linkArea.style.pointerEvents = 'auto'; // 스크래치 완료 후 클릭 활성화
+                console.log('스크래치 완료 - 링크 활성화됨'); // 디버깅 로그
             }
         }
 
@@ -362,15 +358,34 @@
             lastPoint = null;
         });
 
-        // Link click event
-        linkArea.addEventListener('click', function(e) {
+        // 링크 버튼 직접 클릭 이벤트 처리
+        redirectButton.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation(); // 이벤트 버블링 방지
+            
             const targetUrl = 'https://dlcgroup.imweb.me/'; // 실제 URL로 변경하세요
-
+            console.log('버튼 클릭됨 - 리다이렉트: ' + targetUrl); // 디버깅 로그
+            
             if (navigator.userAgent.toLowerCase().indexOf('kakao') > -1) {
                 location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(targetUrl);
             } else {
                 window.open(targetUrl, '_blank');
+            }
+        });
+        
+        // 링크 영역 전체 클릭 이벤트 (기존 코드 유지)
+        linkArea.addEventListener('click', function(e) {
+            // 버튼이 직접 클릭된 경우가 아닐 때만 처리
+            if (e.target !== redirectButton) {
+                e.preventDefault();
+                const targetUrl = 'https://dlcgroup.imweb.me/'; // 실제 URL로 변경하세요
+                console.log('링크 영역 클릭됨 - 리다이렉트: ' + targetUrl); // 디버깅 로그
+                
+                if (navigator.userAgent.toLowerCase().indexOf('kakao') > -1) {
+                    location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(targetUrl);
+                } else {
+                    window.open(targetUrl, '_blank');
+                }
             }
         });
     });
