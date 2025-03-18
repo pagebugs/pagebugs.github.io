@@ -189,6 +189,14 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);
         }
+        .qr-code {
+            pointer-events: none; /* 초기에는 클릭 불가능하게 */
+        }
+        
+        .qr-code.revealed {
+            pointer-events: auto; /* 스크래치 후에는 클릭 가능하게 */
+        }
+                
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -254,114 +262,118 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('scratchCanvas');
-            const ctx = canvas.getContext('2d');
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('scratchCanvas');
+        const ctx = canvas.getContext('2d');
+        const linkArea = document.getElementById('linkArea');
+        
+        // Fill canvas with gray color
+        ctx.fillStyle = '#CCCCCC';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Add text to canvas
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '16px "Spoqa Han Sans"';
+        ctx.textAlign = 'center';
+        ctx.fillText('긁어서', canvas.width/2, canvas.height/2 - 10);
+        ctx.fillText('환급금액', canvas.width/2, canvas.height/2 + 10);
+        ctx.fillText('확인하세요', canvas.width/2, canvas.height/2 + 30);
+
+        // 초기에는 링크 영역 클릭 비활성화
+        linkArea.style.pointerEvents = 'none';
+
+        let isDrawing = false;
+        let lastPoint = null;
+        let isTouchDevice = 'ontouchstart' in window;
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: (clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+                y: (clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+            };
+        }
+
+        function scratch(e) {
+            if (!isDrawing) return;
             
-            // Fill canvas with gray color
-            ctx.fillStyle = '#CCCCCC';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Add text to canvas
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '16px "Spoqa Han Sans"';
-            ctx.textAlign = 'center';
-            ctx.fillText('긁어서', canvas.width/2, canvas.height/2 - 10);
-            ctx.fillText('환급금액', canvas.width/2, canvas.height/2 + 10);
-            ctx.fillText('확인하세요', canvas.width/2, canvas.height/2 + 30);
-
-            let isDrawing = false;
-            let lastPoint = null;
-            let isTouchDevice = 'ontouchstart' in window;
-
-            function getMousePos(e) {
-                const rect = canvas.getBoundingClientRect();
-                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                return {
-                    x: (clientX - rect.left) / (rect.right - rect.left) * canvas.width,
-                    y: (clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
-                };
+            const currentPoint = getMousePos(e);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.lineWidth = isTouchDevice ? 60 : 40;
+            ctx.lineCap = 'round';
+            
+            if (lastPoint) {
+                ctx.moveTo(lastPoint.x, lastPoint.y);
+                ctx.lineTo(currentPoint.x, currentPoint.y);
+                ctx.stroke();
             }
 
-            function scratch(e) {
-                if (!isDrawing) return;
-                
-                const currentPoint = getMousePos(e);
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.beginPath();
-                ctx.lineWidth = isTouchDevice ? 60 : 40;
-                ctx.lineCap = 'round';
-                
-                if (lastPoint) {
-                    ctx.moveTo(lastPoint.x, lastPoint.y);
-                    ctx.lineTo(currentPoint.x, currentPoint.y);
-                    ctx.stroke();
-                }
+            lastPoint = currentPoint;
 
-                lastPoint = currentPoint;
-
-                // Check scratch percentage
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const pixels = imageData.data;
-                let transparent = 0;
-                for (let i = 0; i < pixels.length; i += 4) {
-                    if (pixels[i + 3] === 0) transparent++;
-                }
-                
-                if (transparent > pixels.length / 4 * 0.4) {
-                    canvas.style.opacity = '0';
-                    document.getElementById('linkArea').style.opacity = '1';
-                }
+            // Check scratch percentage
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            let transparent = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+                if (pixels[i + 3] === 0) transparent++;
             }
+            
+            if (transparent > pixels.length / 4 * 0.4) {
+                canvas.style.opacity = '0';
+                linkArea.style.opacity = '1';
+                linkArea.style.pointerEvents = 'auto'; // 스크래치 완료 후 클릭 활성화
+            }
+        }
 
-            // Mouse events
-            canvas.addEventListener('mousedown', (e) => {
-                isDrawing = true;
-                lastPoint = getMousePos(e);
-            });
-
-            canvas.addEventListener('mousemove', scratch);
-            canvas.addEventListener('mouseup', () => {
-                isDrawing = false;
-                lastPoint = null;
-            });
-            canvas.addEventListener('mouseout', () => {
-                isDrawing = false;
-                lastPoint = null;
-            });
-
-            // Touch events
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                isDrawing = true;
-                lastPoint = getMousePos(e);
-            });
-
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                scratch(e);
-            });
-
-            canvas.addEventListener('touchend', () => {
-                isDrawing = false;
-                lastPoint = null;
-            });
-
-            // Link click event
-            document.getElementById('linkArea').addEventListener('click', function() {
-                // 여기에 실제 서비스 URL을 입력하세요
-                const targetUrl = 'https://dlcgroup.imweb.me/';
-                
-                // Check if running in KakaoTalk browser
-                if (navigator.userAgent.toLowerCase().indexOf('kakao') > -1) {
-                    location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(targetUrl);
-                } else {
-                    window.open(targetUrl, '_blank'); // Open in new tab for PC
-                }
-            });
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            lastPoint = getMousePos(e);
         });
-    </script>
+
+        canvas.addEventListener('mousemove', scratch);
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            lastPoint = null;
+        });
+        canvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+            lastPoint = null;
+        });
+
+        // Touch events
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDrawing = true;
+            lastPoint = getMousePos(e);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            scratch(e);
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isDrawing = false;
+            lastPoint = null;
+        });
+
+        // Link click event
+        linkArea.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetUrl = 'https://dlcgroup.imweb.me/'; // 실제 URL로 변경하세요
+
+            if (navigator.userAgent.toLowerCase().indexOf('kakao') > -1) {
+                location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(targetUrl);
+            } else {
+                window.open(targetUrl, '_blank');
+            }
+        });
+    });
+</script>
 </body>
 </html>
