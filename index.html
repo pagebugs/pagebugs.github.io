@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>든든한 빽</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .card {
+            width: 350px;
+            height: 200px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+
+        .amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 4px;
+        }
+
+        .highlight {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 16px;
+        }
+
+        .scratch-container {
+            position: relative;
+            width: 128px;
+            height: 128px;
+            margin: 0 auto;
+        }
+
+        #scratchCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+
+        .qr-code {
+            width: 128px;
+            height: 128px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="title">든든한 빽.</div>
+        <div class="subtitle">이제 4대보험도</div>
+        <div class="amount">사업장 평균</div>
+        <div class="highlight">5천만원 돌려받기!</div>
+        
+        <div class="scratch-container">
+            <div class="qr-code">
+                <img src="/api/placeholder/128/128" alt="QR Code" id="qrCode" style="opacity: 0; transition: opacity 0.5s;">
+            </div>
+            <canvas id="scratchCanvas" width="128" height="128"></canvas>
+        </div>
+        
+        <div class="info" id="infoText">긁어서 QR코드를 확인하세요</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('scratchCanvas');
+            const ctx = canvas.getContext('2d');
+            const qrCode = document.getElementById('qrCode');
+            const infoText = document.getElementById('infoText');
+            
+            // Fill canvas with gray color
+            ctx.fillStyle = '#CCCCCC';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let isDrawing = false;
+            let lastPoint = null;
+
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                return {
+                    x: (clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+                    y: (clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+                };
+            }
+
+            function scratch(e) {
+                if (!isDrawing) return;
+                
+                const currentPoint = getMousePos(e);
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.lineWidth = 40;
+                ctx.lineCap = 'round';
+                
+                if (lastPoint) {
+                    ctx.moveTo(lastPoint.x, lastPoint.y);
+                    ctx.lineTo(currentPoint.x, currentPoint.y);
+                    ctx.stroke();
+                }
+
+                lastPoint = currentPoint;
+
+                // Check scratch percentage
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+                let transparent = 0;
+                for (let i = 0; i < pixels.length; i += 4) {
+                    if (pixels[i + 3] === 0) transparent++;
+                }
+                
+                if (transparent > pixels.length / 4 * 0.5) {
+                    canvas.style.opacity = '0';
+                    qrCode.style.opacity = '1';
+                    infoText.textContent = 'QR코드를 스캔하세요!';
+                }
+            }
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                lastPoint = getMousePos(e);
+            });
+
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+                lastPoint = null;
+            });
+            canvas.addEventListener('mouseout', () => {
+                isDrawing = false;
+                lastPoint = null;
+            });
+
+            // Touch events
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isDrawing = true;
+                lastPoint = getMousePos(e);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                scratch(e);
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isDrawing = false;
+                lastPoint = null;
+            });
+        });
+    </script>
+</body>
+</html>
